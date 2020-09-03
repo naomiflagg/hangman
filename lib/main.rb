@@ -19,13 +19,18 @@ class Hangman
     puts 'Would you like to open a saved game? If yes, type Y and press enter.'
     return unless gets.chomp.upcase == 'Y'
 
-    from_yaml('naomi_hangman_game.yml')
+    begin 
+      from_yaml('naomi_hangman_game.yml')
+    rescue
+      puts "Sorry, no saved file was found. Let's start a new game!"
+    end
   end
 
   def from_yaml(file)
     data = YAML.load_file(file)
     @secret_word = data[:secret_word]
     @guesses_left = data[:guesses_left]
+    @guessing = data[:guessing]
   end
 
   def set_word
@@ -33,6 +38,7 @@ class Hangman
     # Create array of words between 5 and 12 characters, then select randomly
     words = dict.select { |line| line.size.between?(5, 12) }
     @secret_word = words.sample.upcase
+    @guessing = ['_'] * @secret_word.size
   end
 
   def display_instructions
@@ -44,27 +50,26 @@ class Hangman
   end
 
   def play_game
-    @guessing = ['_'] * @secret_word.size
     loop do
-      break if save_game?
-
+      display_guessing
       ask_for_guess
       evaluate_guess
       break if game_over?
 
-      display_guessing
+      break if save_game?
     end
   end
 
   def save_game?
     puts 'Would you like to save your game and exit? If yes, type Y and press enter.'
-    return unless gets.chomp.upcase == 'Y'
-
-    File.open('naomi_hangman_game.yml', 'w') { |file| file.puts to_yaml }
+    if gets.chomp.upcase == 'Y'
+      File.open('naomi_hangman_game.yml', 'w') { |file| file.puts to_yaml }
+      return true
+    end
   end
 
   def to_yaml
-    YAML.dump({ secret_word: @secret_word, guesses_left: @guesses_left })
+    YAML.dump({ secret_word: @secret_word, guesses_left: @guesses_left, guessing: @guessing })
   end
 
   def ask_for_guess
