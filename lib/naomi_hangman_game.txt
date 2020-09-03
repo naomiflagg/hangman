@@ -1,0 +1,3 @@
+--- !ruby/object
+secret_word: boom
+guesses_left: 4
